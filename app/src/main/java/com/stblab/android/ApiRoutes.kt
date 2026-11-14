@@ -47,7 +47,7 @@ fun Application.installStbLabRoutes(service: HostService) {
             val page = context.assets.open("web/index.html").bufferedReader().use { it.readText() }
             call.respondText(page, ContentType.Text.Html)
         }
-        get("/api/v1/health") { call.respond(HealthDto(false, "Pairing with the Android TV Remote target is not configured yet"), HttpStatusCode.ServiceUnavailable) }
+        get("/api/v1/health") { call.respond(HttpStatusCode.ServiceUnavailable, HealthDto(false, "Pairing with the Android TV Remote target is not configured yet")) }
         post("/api/auth") {
             val body = call.receive<PinBody>()
             val now = System.currentTimeMillis()
