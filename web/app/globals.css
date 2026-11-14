@@ -5,6 +5,7 @@
   --sidebar-bg: rgba(2, 4, 24, 0.86);
   --accent: #159feb;
   --focus: #32b8ff;
+  --button-focus: linear-gradient(180deg, #fff59d 0%, #ffd43b 52%, #ff9f1c 100%);
   --selector-ring: linear-gradient(135deg, #ff7777 0%, #ed1b36 48%, #a90024 100%);
   --selection-glass: linear-gradient(
     180deg,
@@ -1418,9 +1419,14 @@ body,
 .edit-item:focus-visible,
 button:focus,
 button:focus-visible {
-  background: var(--selection-glass) !important;
-  color: #000 !important;
-  border-color: rgba(220, 244, 255, 0.98) !important;
+  background: var(--button-focus) !important;
+  color: #111827 !important;
+  border: 3px solid #fff !important;
+  outline: 3px solid #ffb300 !important;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px rgba(255, 179, 0, 0.32), 0 0 24px rgba(255, 193, 7, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
+  z-index: 5;
 }
 
 .keypad-btn.nav-ok,

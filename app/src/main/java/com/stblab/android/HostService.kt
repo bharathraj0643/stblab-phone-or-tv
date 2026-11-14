@@ -22,7 +22,6 @@ import java.net.NetworkInterface
 class HostService : Service() {
     companion object {
         const val ACTION_START = "com.stblab.android.START"
-        const val ACTION_STOP = "com.stblab.android.STOP"
         @Volatile var running = false
         @Volatile var error: String? = null
             private set
@@ -31,11 +30,13 @@ class HostService : Service() {
         private const val NOTIFICATION_ID = 42
     }
     private var engine: ApplicationEngine? = null
+    @Volatile private var startRequested = false
     override fun onCreate() { super.onCreate(); createChannel() }
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == ACTION_STOP) { stopSelf(); return START_NOT_STICKY }
+        if (engine != null || startRequested) return START_STICKY
         error = null
         startForeground(NOTIFICATION_ID, notification("Starting StbLab server…"))
+        startRequested = true
         Thread {
             try {
                 val server = embeddedServer(CIO, host = "0.0.0.0", port = PORT) {
@@ -44,12 +45,18 @@ class HostService : Service() {
                 }
                 engine = server
                 server.start(wait = true)
-            } catch (t: Throwable) { error = t.message ?: "Unable to start server"; running = false; stopSelf() }
+            } catch (t: Throwable) {
+                error = t.message ?: "Unable to start server"
+                running = false
+                startRequested = false
+                stopSelf()
+            }
         }.apply { name = "StbLabHttp"; isDaemon = true; start() }
         return START_STICKY
     }
     override fun onDestroy() {
         running = false
+        startRequested = false
         val old = engine; engine = null
         Thread { runCatching { old?.stop(250, 1000) } }.start()
         @Suppress("DEPRECATION")

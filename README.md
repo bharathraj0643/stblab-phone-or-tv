@@ -11,13 +11,22 @@ origin. Channel data and remote pairing credentials remain in app-private storag
 3. The Airtel box displays a six-character pairing code. Enter it on the BPL TV and confirm.
 4. Wait for the BPL screen to report **Connected**. The connection uses TLS on port 6466 after pairing
    on port 6467, and stores the Airtel certificate fingerprint for future connections.
-5. Start the web server and open its URL on the Airtel browser. The picker opens directly without a
-   PIN gate. Tune channels and edit the guide from the browser.
+5. The web server starts automatically when StbLab opens and after the TV boots. Open its URL on the
+   Airtel browser. The picker opens directly without a PIN gate. Tune channels and edit the guide
+   from the browser.
+
+The pairing screen also has **Find Airtel Box**. It searches for `_androidtvremote2._tcp` services
+over mDNS and probes port 6466 on the local IPv4 subnet. Select a discovered device to fill its
+address, then pair as usual. Manual IP entry remains available if multicast or subnet scanning is
+blocked by the router.
 
 ## Build
 
 Open this directory in Android Studio and select **Build → Assemble Module ‘StbLabAndroid.app’**. The
 debug APK is written to `app/build/outputs/apk/debug/app-debug.apk`.
+
+The host runs as a low-importance foreground service so Android can keep it alive in the background.
+It starts at boot and when the app opens; Android may show its silent, ongoing service notification.
 
 To rebuild the picker UI, run `npm ci` and `npm run build:android` in `web/`; that exports the Next.js
 page and copies its static assets into the Android app before packaging.
