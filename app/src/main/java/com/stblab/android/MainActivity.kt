@@ -19,7 +19,6 @@ class MainActivity : Activity() {
     private lateinit var remote: RemoteV2Client
     private lateinit var serverStatus: TextView
     private lateinit var url: TextView
-    private lateinit var pin: TextView
     private lateinit var remoteStatus: TextView
     private lateinit var hostInput: EditText
     private lateinit var codeInput: EditText
@@ -48,7 +47,6 @@ class MainActivity : Activity() {
         root.addView(text("WEB SERVER", 14f, 0xff27d7a1.toInt()))
         serverStatus = text("Server stopped", 18f, 0xffffcc66.toInt()); root.addView(serverStatus)
         url = text("", 22f, 0xff27d7a1.toInt()); root.addView(url)
-        pin = text("", 18f); root.addView(pin)
         serverButton = Button(this).apply { text = "START SERVER"; setOnClickListener { toggleServer() } }; root.addView(serverButton)
 
         root.addView(text("AIRTEL BOX PAIRING", 14f, 0xff27d7a1.toInt()))
@@ -84,7 +82,6 @@ class MainActivity : Activity() {
         val running = HostService.running
         serverStatus.text = HostService.error?.let { "Server error: $it" } ?: if (running) "Server running" else "Server stopped"
         url.text = if (running && ip != "No network") "http://$ip:${HostService.PORT}" else ""
-        pin.text = if (running) "Web access PIN: ${getSharedPreferences("stblab_host", MODE_PRIVATE).getString("access_pin", "------")}" else ""
         serverButton.text = if (running) "STOP SERVER" else "START SERVER"
 
         val state = remote.snapshot()

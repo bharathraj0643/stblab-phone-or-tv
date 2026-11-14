@@ -7,6 +7,11 @@ plugins {
 android {
     namespace = "com.stblab.android"
     compileSdk = 35
+    androidResources {
+        // AAPT excludes directories prefixed with "_" by default. Next.js exports
+        // all browser assets under _next/, so retain those assets in the APK.
+        ignoreAssetsPattern = "!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~"
+    }
     defaultConfig {
         applicationId = "com.stblab.android"
         minSdk = 23

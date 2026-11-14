@@ -120,9 +120,8 @@ port, and pairing/connection health. Handle no Wi-Fi, occupied port, and bind fa
 
 The server should bind to the LAN interfaces and serve on a configurable port (default `8080`).
 Reserve the BPL TV's IP in the router. Keep the service local to the trusted LAN; do not port-forward
-it. Since the picker can send remote commands, add a short local access PIN/token or another simple
-same-LAN authorization mechanism before exposing mutation endpoints. Do not treat a random URL as
-authentication.
+it. The user explicitly chose to run the picker without a PIN gate, so the app does not require
+browser authorization for mutation or control endpoints.
 
 Use an Android foreground service for user-visible long-running server operation. tv-remote is a
 useful reference for declaring the service type, reporting status, and releasing locks during
@@ -189,7 +188,7 @@ continue to use the existing route semantics and response shapes.
 
 - Implement the foreground HTTP server service and status screen.
 - Add the StbLab API operations over HTTP, backed by the Android protocol client.
-- Add local browser authorization for command endpoints and keep the listener LAN-only.
+- Keep the listener LAN-only; browser authorization is intentionally omitted per the user's preference.
 - Implement channel persistence and import/migration behavior for existing channel data.
 
 ### Phase 4: picker UI integration
@@ -228,7 +227,7 @@ continue to use the existing route semantics and response shapes.
   clients. This must be tested early.
 - Next.js static export, current API JSON contracts, and SQLite support need verification.
 - A listener reachable from the LAN can control the Airtel box. Keep access constrained to the home
-  network and require authorization for write/control requests.
+  network; the user chose not to add a PIN gate.
 - Android may stop background work or network access in standby; test on the target device rather
   than assuming the service remains alive indefinitely.
 

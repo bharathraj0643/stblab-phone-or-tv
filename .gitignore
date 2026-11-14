@@ -11,3 +11,8 @@ local.properties
 
 # macOS filesystem metadata
 .DS_Store
+
+# Web build outputs and installed packages
+**/node_modules/
+**/.next/
+**/out/
