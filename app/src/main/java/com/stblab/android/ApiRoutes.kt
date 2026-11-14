@@ -14,11 +14,14 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.delete
 import io.ktor.server.routing.routing
+import com.xstream.remote.RemoteV2Client
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import java.security.SecureRandom
 
 @Serializable private data class ErrorDto(val title: String, val detail: String? = null)
-@Serializable private data class HealthDto(val deviceConnected: Boolean, val message: String)
+@Serializable private data class HealthDto(val status: String, val deviceConnected: Boolean, val detail: String?)
 @Serializable private data class RemoteState(val connected: Boolean = false, val isOn: Boolean? = null, val currentApp: String? = null, val volume: Volume? = null, val device: Device? = null, val features: List<String> = emptyList())
 @Serializable private data class Volume(val level: Int, val max: Int, val muted: Boolean)
 @Serializable private data class Device(val manufacturer: String, val model: String, val softwareVersion: String)
@@ -34,11 +37,15 @@ import java.security.SecureRandom
 @Serializable private data class ReorderFavorites(val channelIds: List<Int>)
 @Serializable private data class PinBody(val pin: String)
 @Serializable private data class TokenDto(val token: String)
+@Serializable private data class KeyAck(val key: String, val direction: String)
+@Serializable private data class TextAck(val text: String, val length: Int)
+@Serializable private data class LaunchAck(val app: String)
 
 fun Application.installStbLabRoutes(service: HostService) {
     val context = service.applicationContext
     val store = ChannelStore(context)
     val prefs = context.getSharedPreferences("stblab_host", Context.MODE_PRIVATE)
+    val remote = RemoteV2Client.get(context)
     val pin = prefs.getString("access_pin", null) ?: (100000 + SecureRandom().nextInt(900000)).toString().also { prefs.edit().putString("access_pin", it).apply() }
     val token = prefs.getString("access_token", null) ?: ByteArray(24).also(SecureRandom()::nextBytes).joinToString("") { "%02x".format(it) }.also { prefs.edit().putString("access_token", it).apply() }
     HostService.running = true
@@ -47,7 +54,11 @@ fun Application.installStbLabRoutes(service: HostService) {
             val page = context.assets.open("web/index.html").bufferedReader().use { it.readText() }
             call.respondText(page, ContentType.Text.Html)
         }
-        get("/api/v1/health") { call.respond(HttpStatusCode.ServiceUnavailable, HealthDto(false, "Pairing with the Android TV Remote target is not configured yet")) }
+        get("/api/v1/health") {
+            val state = remote.snapshot()
+            val health = HealthDto(if (state.connected) "ok" else "degraded", state.connected, if (state.connected) null else state.error ?: "Remote ${state.status}")
+            call.respond(if (state.connected) HttpStatusCode.OK else HttpStatusCode.ServiceUnavailable, health)
+        }
         post("/api/auth") {
             val body = call.receive<PinBody>()
             val now = System.currentTimeMillis()
@@ -64,12 +75,33 @@ fun Application.installStbLabRoutes(service: HostService) {
                 call.respond(TokenDto(token))
             }
         }
-        get("/api/v1/remote/state") { call.respond(RemoteState()) }
-        get("/api/v1/remote/keys") { call.respond(emptyList<String>()) }
-        post("/api/v1/remote/key") { if (!call.authorized(token)) return@post call.respond(HttpStatusCode.Unauthorized, ErrorDto("PIN required")); call.receive<KeyBody>(); call.respond(HttpStatusCode.ServiceUnavailable, ErrorDto("Remote not paired", "Android TV Remote v2 pairing is not configured.")) }
-        post("/api/v1/remote/text") { if (!call.authorized(token)) return@post call.respond(HttpStatusCode.Unauthorized, ErrorDto("PIN required")); call.receive<TextBody>(); call.respond(HttpStatusCode.ServiceUnavailable, ErrorDto("Remote not paired", "Android TV Remote v2 pairing is not configured.")) }
-        post("/api/v1/remote/launch") { if (!call.authorized(token)) return@post call.respond(HttpStatusCode.Unauthorized, ErrorDto("PIN required")); call.receive<LaunchBody>(); call.respond(HttpStatusCode.ServiceUnavailable, ErrorDto("Remote not paired", "Android TV Remote v2 pairing is not configured.")) }
-        post("/api/v1/remote/tune") { if (!call.authorized(token)) return@post call.respond(HttpStatusCode.Unauthorized, ErrorDto("PIN required")); call.receive<TuneBody>(); call.respond(HttpStatusCode.ServiceUnavailable, ErrorDto("Remote not paired", "Android TV Remote v2 pairing is not configured.")) }
+        get("/api/v1/remote/state") {
+            val s = remote.snapshot()
+            call.respond(RemoteState(s.connected, s.isOn, s.currentApp,
+                if (s.volumeLevel != null && s.volumeMax != null && s.muted != null) Volume(s.volumeLevel, s.volumeMax, s.muted) else null,
+                if (s.manufacturer != null && s.model != null && s.softwareVersion != null) Device(s.manufacturer, s.model, s.softwareVersion) else null,
+                if (s.connected) listOf("KEY", "IME", "APP_LINK", "VOLUME", "POWER") else emptyList()))
+        }
+        get("/api/v1/remote/keys") { call.respond(remote.keys()) }
+        post("/api/v1/remote/key") {
+            if (!call.authorized(token)) return@post call.respond(HttpStatusCode.Unauthorized, ErrorDto("PIN required"))
+            val body = call.receive<KeyBody>()
+            if (!body.direction.equals("SHORT", true)) return@post call.respond(HttpStatusCode.BadRequest, ErrorDto("Unsupported key direction", "Only SHORT key presses are supported."))
+            call.remoteAction { remote.sendKey(body.key); KeyAck(body.key.uppercase(), "SHORT") }
+        }
+        post("/api/v1/remote/text") {
+            if (!call.authorized(token)) return@post call.respond(HttpStatusCode.Unauthorized, ErrorDto("PIN required"))
+            val body = call.receive<TextBody>(); call.remoteAction { remote.sendText(body.text); TextAck(body.text, body.text.length) }
+        }
+        post("/api/v1/remote/launch") {
+            if (!call.authorized(token)) return@post call.respond(HttpStatusCode.Unauthorized, ErrorDto("PIN required"))
+            val body = call.receive<LaunchBody>(); call.remoteAction { remote.launch(body.app); LaunchAck(body.app) }
+        }
+        post("/api/v1/remote/tune") {
+            if (!call.authorized(token)) return@post call.respond(HttpStatusCode.Unauthorized, ErrorDto("PIN required"))
+            val body = call.receive<TuneBody>()
+            call.remoteAction { withContext(Dispatchers.IO) { remote.tune(body.redirectNumber, body.fastTune) }; TuneResult(body.redirectNumber, body.channelName) }
+        }
         get("/api/v1/genres") { call.respond(store.genres()) }
         post("/api/v1/genres") {
             if (!call.authorized(token)) return@post call.respond(HttpStatusCode.Unauthorized, ErrorDto("PIN required", "Enter the access PIN shown on the host TV."))
@@ -121,4 +153,12 @@ fun Application.installStbLabRoutes(service: HostService) {
 private suspend fun ApplicationCall.authorized(token: String): Boolean {
     val supplied = request.headers["X-StbLab-Token"] ?: return false
     return supplied == token
+}
+
+private suspend fun ApplicationCall.remoteAction(action: suspend () -> Any) {
+    try {
+        respond(action())
+    } catch (t: Throwable) {
+        respond(HttpStatusCode.ServiceUnavailable, ErrorDto("Remote unavailable", t.message ?: "Could not reach the Airtel box."))
+    }
 }

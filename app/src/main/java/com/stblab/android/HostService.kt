@@ -34,6 +34,7 @@ class HostService : Service() {
     override fun onCreate() { super.onCreate(); createChannel() }
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) { stopSelf(); return START_NOT_STICKY }
+        error = null
         startForeground(NOTIFICATION_ID, notification("Starting StbLab server…"))
         Thread {
             try {
