@@ -1,0 +1,13 @@
+# Gradle state and generated build outputs
+.gradle/
+**/build/
+
+# Local Android SDK path
+local.properties
+
+# Android Studio / IntelliJ project state
+.idea/
+*.iml
+
+# macOS filesystem metadata
+.DS_Store
