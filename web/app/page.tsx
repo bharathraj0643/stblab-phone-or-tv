@@ -10,6 +10,7 @@ import {
   tuneChannel,
 } from "@/lib/api";
 import EditModal from "./components/EditModal";
+import JsonConfigModal from "./components/JsonConfigModal";
 import VirtualKeypad from "./components/VirtualKeypad";
 
 const CHANNELS_PER_PAGE = 11;
@@ -255,6 +256,7 @@ export default function ChannelPickerPage() {
 
   // Edit UI modal state (Point 6)
   const [isEditOpen, setIsEditOpen] = useState<boolean>(false);
+  const [isJsonConfigOpen, setIsJsonConfigOpen] = useState(false);
 
   // Virtual Remote Keypad toggle state (collapsed by default)
   const [isKeypadOpen, setIsKeypadOpen] = useState<boolean>(false);
@@ -1184,6 +1186,10 @@ export default function ChannelPickerPage() {
             <span>⚙</span>
             <span>EDIT CHANNELS</span>
           </button>
+          <button type="button" className="edit-btn json-open-btn" onClick={() => setIsJsonConfigOpen(true)} aria-label="Import, export, or edit channel JSON">
+            <span>{"{}"}</span>
+            <span>JSON DATA</span>
+          </button>
         </div>
       </aside>
 
@@ -1196,6 +1202,7 @@ export default function ChannelPickerPage() {
           onRefresh={loadGenres}
         />
       )}
+      {isJsonConfigOpen && <JsonConfigModal onClose={() => setIsJsonConfigOpen(false)} onApplied={loadGenres} />}
     </div>
   );
 }

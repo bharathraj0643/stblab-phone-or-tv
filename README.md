@@ -29,9 +29,19 @@ shapes. The picker API is available directly to devices on the local network. On
 are implemented; key hold/release directions are not.
 
 The bundled picker is built from the `web/` Next.js source as a static export. Channel data is
-persisted as app-private JSON rather than imported from the desktop SQLite database. Verify pairing,
-LAN access, standby, and reconnect behavior on the BPL/Airtel firmware. HTTP traffic between browser
-and BPL host is not encrypted.
+seeded on first launch from `app/src/main/assets/default-channels.json` and persisted as app-private
+JSON. The **JSON DATA** button opens a separate workflow to load the current config into an editor,
+download it, paste/edit JSON, or choose a `.json` file and apply it. Applying JSON replaces the
+current genre/channel configuration; the existing **EDIT CHANNELS** workflow is unchanged.
+
+JSON format version 1 is `{ "version": 1, "genres": [...] }`, where each genre has `id`, `name`,
+`sortOrder`, and `channels`; each channel has `id`, `genreId`, `name`, `dummyNumber`,
+`redirectNumber`, `sortOrder`, `isFavorite`, and `favoriteOrder`. Import validates IDs, references,
+names, and number ranges before saving. Existing app data is preserved on upgrades; the bundled
+defaults are copied only when no user configuration exists yet.
+
+Verify pairing, LAN access, standby, and reconnect behavior on the BPL/Airtel firmware. HTTP traffic
+between browser and BPL host is not encrypted.
 
 The protocol sources adapted from `xstream-remote` are under `app/src/main/java/com/xstream/remote/`.
 The corresponding MIT license notice is packaged at `app/src/main/assets/licenses/xstream-remote-MIT.txt`.

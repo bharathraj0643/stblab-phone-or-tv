@@ -9,12 +9,22 @@ import java.io.File
 
 @Serializable data class ChannelDto(val id: Int, val genreId: Int, val name: String, val dummyNumber: Int, val redirectNumber: Int, val sortOrder: Int = 0, val isFavorite: Boolean = false, val favoriteOrder: Int = 0)
 @Serializable data class GenreDto(val id: Int, val name: String, val sortOrder: Int = 0, val channels: List<ChannelDto> = emptyList())
+@Serializable data class ChannelConfigDto(val version: Int = 1, val genres: List<GenreDto>)
 
 /** Small atomic JSON store; data stays in app-private storage and survives upgrades. */
 class ChannelStore(context: Context) {
     private val file = File(context.filesDir, "channels.json")
     private val lock = Any()
     private val json = Json { ignoreUnknownKeys = true; prettyPrint = true }
+
+    init {
+        if (!file.exists()) {
+            val defaults = context.assets.open("default-channels.json").bufferedReader().use { it.readText() }
+            val config = json.decodeFromString<ChannelConfigDto>(defaults)
+            require(config.version == 1) { "Unsupported bundled channel config version ${config.version}" }
+            write(config.genres)
+        }
+    }
 
     private fun read(): List<GenreDto> = if (!file.exists()) emptyList() else runCatching {
         json.decodeFromString<List<GenreDto>>(file.readText())
@@ -25,6 +35,20 @@ class ChannelStore(context: Context) {
         if (!temp.renameTo(file)) { file.writeText(temp.readText()); temp.delete() }
     }
     fun genres(): List<GenreDto> = synchronized(lock) { read().sortedBy { it.sortOrder }.map { it.copy(channels = it.channels.sortedBy(ChannelDto::sortOrder)) } }
+    fun exportConfig(): ChannelConfigDto = synchronized(lock) { ChannelConfigDto(genres = genres()) }
+    fun importConfig(config: ChannelConfigDto) = synchronized(lock) {
+        require(config.version == 1) { "Unsupported JSON version ${config.version}; expected 1" }
+        require(config.genres.isNotEmpty()) { "JSON must contain at least one genre" }
+        require(config.genres.all { it.id > 0 && it.name.isNotBlank() && it.name.length <= 100 }) { "Every genre needs a positive id and a name up to 100 characters" }
+        require(config.genres.map { it.id }.distinct().size == config.genres.size) { "Genre IDs must be unique" }
+        require(config.genres.map { it.name.trim().lowercase() }.distinct().size == config.genres.size) { "Genre names must be unique" }
+        val channels = config.genres.flatMap { genre -> genre.channels.map { it to genre } }
+        require(channels.map { it.first.id }.distinct().size == channels.size) { "Channel IDs must be unique" }
+        require(channels.all { (channel, genre) -> channel.id > 0 && channel.genreId == genre.id && channel.name.isNotBlank() && channel.name.length <= 100 && channel.dummyNumber in 0..9999 && channel.redirectNumber in 0..9999 }) {
+            "Each channel needs a unique positive id, matching genreId, name, and channel numbers from 0 to 9999"
+        }
+        write(config.genres)
+    }
     fun favorites(): List<ChannelDto> = synchronized(lock) { read().flatMap { it.channels }.filter { it.isFavorite }.sortedBy(ChannelDto::favoriteOrder) }
     fun createGenre(name: String, sort: Int): GenreDto = synchronized(lock) {
         require(name.isNotBlank() && name.length <= 100)

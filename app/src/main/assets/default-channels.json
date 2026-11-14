@@ -1,0 +1,626 @@
+{
+  "version": 1,
+  "genres": [
+    {
+      "id": 1,
+      "name": "Tamil",
+      "sortOrder": 1,
+      "channels": [
+        {
+          "id": 1,
+          "genreId": 1,
+          "name": "Sun TV",
+          "dummyNumber": 5,
+          "redirectNumber": 755,
+          "sortOrder": 1,
+          "isFavorite": true,
+          "favoriteOrder": 1
+        },
+        {
+          "id": 2,
+          "genreId": 1,
+          "name": "K TV",
+          "dummyNumber": 15,
+          "redirectNumber": 15,
+          "sortOrder": 2,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 3,
+          "genreId": 1,
+          "name": "Sun Life",
+          "dummyNumber": 17,
+          "redirectNumber": 17,
+          "sortOrder": 3,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 4,
+          "genreId": 1,
+          "name": "Adithya TV",
+          "dummyNumber": 20,
+          "redirectNumber": 20,
+          "sortOrder": 4,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 5,
+          "genreId": 1,
+          "name": "Kalaignar TV",
+          "dummyNumber": 25,
+          "redirectNumber": 25,
+          "sortOrder": 5,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 6,
+          "genreId": 1,
+          "name": "Jaya TV",
+          "dummyNumber": 27,
+          "redirectNumber": 27,
+          "sortOrder": 6,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 7,
+          "genreId": 1,
+          "name": "Makkal TV",
+          "dummyNumber": 29,
+          "redirectNumber": 29,
+          "sortOrder": 7,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 8,
+          "genreId": 1,
+          "name": "DD Tamil",
+          "dummyNumber": 35,
+          "redirectNumber": 35,
+          "sortOrder": 8,
+          "isFavorite": true,
+          "favoriteOrder": 2
+        },
+        {
+          "id": 9,
+          "genreId": 1,
+          "name": "Vijay TV",
+          "dummyNumber": 38,
+          "redirectNumber": 38,
+          "sortOrder": 9,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 10,
+          "genreId": 1,
+          "name": "Colors Tamil",
+          "dummyNumber": 42,
+          "redirectNumber": 42,
+          "sortOrder": 10,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 11,
+          "genreId": 1,
+          "name": "Sony Vizha",
+          "dummyNumber": 46,
+          "redirectNumber": 46,
+          "sortOrder": 11,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 12,
+          "genreId": 1,
+          "name": "Vaanavil",
+          "dummyNumber": 50,
+          "redirectNumber": 50,
+          "sortOrder": 12,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 13,
+          "genreId": 1,
+          "name": "Zee Tamil",
+          "dummyNumber": 53,
+          "redirectNumber": 53,
+          "sortOrder": 13,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 14,
+          "genreId": 1,
+          "name": "Tamil Naaptol",
+          "dummyNumber": 54,
+          "redirectNumber": 54,
+          "sortOrder": 14,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 15,
+          "genreId": 1,
+          "name": "Vasanth TV",
+          "dummyNumber": 55,
+          "redirectNumber": 55,
+          "sortOrder": 15,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 16,
+          "genreId": 1,
+          "name": "Mega TV",
+          "dummyNumber": 57,
+          "redirectNumber": 57,
+          "sortOrder": 16,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 17,
+          "genreId": 1,
+          "name": "Moon TV",
+          "dummyNumber": 58,
+          "redirectNumber": 58,
+          "sortOrder": 17,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 18,
+          "genreId": 1,
+          "name": "Vijay Super",
+          "dummyNumber": 59,
+          "redirectNumber": 59,
+          "sortOrder": 18,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 19,
+          "genreId": 1,
+          "name": "D Tamil",
+          "dummyNumber": 60,
+          "redirectNumber": 60,
+          "sortOrder": 19,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 20,
+          "genreId": 1,
+          "name": "Tamil Cinema Club",
+          "dummyNumber": 62,
+          "redirectNumber": 62,
+          "sortOrder": 20,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 21,
+          "genreId": 1,
+          "name": "Sun Music",
+          "dummyNumber": 63,
+          "redirectNumber": 63,
+          "sortOrder": 21,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 22,
+          "genreId": 1,
+          "name": "Kalaignar Isai Aruvi",
+          "dummyNumber": 64,
+          "redirectNumber": 64,
+          "sortOrder": 22,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Telugu",
+      "sortOrder": 2,
+      "channels": [
+        {
+          "id": 23,
+          "genreId": 2,
+          "name": "Sun Gemini",
+          "dummyNumber": 150,
+          "redirectNumber": 150,
+          "sortOrder": 1,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 24,
+          "genreId": 2,
+          "name": "Maa TV",
+          "dummyNumber": 152,
+          "redirectNumber": 152,
+          "sortOrder": 2,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 25,
+          "genreId": 2,
+          "name": "Sun Gemini Movies",
+          "dummyNumber": 154,
+          "redirectNumber": 154,
+          "sortOrder": 3,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 26,
+          "genreId": 2,
+          "name": "ETV Telugu",
+          "dummyNumber": 156,
+          "redirectNumber": 156,
+          "sortOrder": 4,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 27,
+          "genreId": 2,
+          "name": "Sun Gemini Comedy",
+          "dummyNumber": 158,
+          "redirectNumber": 158,
+          "sortOrder": 5,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 28,
+          "genreId": 2,
+          "name": "DD Yadagiri",
+          "dummyNumber": 159,
+          "redirectNumber": 159,
+          "sortOrder": 6,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 29,
+          "genreId": 2,
+          "name": "DD Saptagiri",
+          "dummyNumber": 160,
+          "redirectNumber": 160,
+          "sortOrder": 7,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 30,
+          "genreId": 2,
+          "name": "Zee Telugu",
+          "dummyNumber": 161,
+          "redirectNumber": 161,
+          "sortOrder": 8,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 31,
+          "genreId": 2,
+          "name": "Sun Gemini Life",
+          "dummyNumber": 162,
+          "redirectNumber": 162,
+          "sortOrder": 9,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 32,
+          "genreId": 2,
+          "name": "ETV Life",
+          "dummyNumber": 163,
+          "redirectNumber": 163,
+          "sortOrder": 10,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 33,
+          "genreId": 2,
+          "name": "Telugu Naaptol",
+          "dummyNumber": 164,
+          "redirectNumber": 164,
+          "sortOrder": 11,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 34,
+          "genreId": 2,
+          "name": "Zee Cinemalu",
+          "dummyNumber": 167,
+          "redirectNumber": 167,
+          "sortOrder": 12,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Kannada",
+      "sortOrder": 3,
+      "channels": [
+        {
+          "id": 35,
+          "genreId": 3,
+          "name": "Sun Udaya",
+          "dummyNumber": 250,
+          "redirectNumber": 250,
+          "sortOrder": 1,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 36,
+          "genreId": 3,
+          "name": "Colors Kannada",
+          "dummyNumber": 252,
+          "redirectNumber": 252,
+          "sortOrder": 2,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 37,
+          "genreId": 3,
+          "name": "Sun Udaya Movies",
+          "dummyNumber": 253,
+          "redirectNumber": 253,
+          "sortOrder": 3,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 38,
+          "genreId": 3,
+          "name": "Zee Kannada",
+          "dummyNumber": 254,
+          "redirectNumber": 254,
+          "sortOrder": 4,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 39,
+          "genreId": 3,
+          "name": "Star Suvarna",
+          "dummyNumber": 258,
+          "redirectNumber": 258,
+          "sortOrder": 5,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 40,
+          "genreId": 3,
+          "name": "Sun Udaya Comedy",
+          "dummyNumber": 259,
+          "redirectNumber": 259,
+          "sortOrder": 6,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 41,
+          "genreId": 3,
+          "name": "Colors Super",
+          "dummyNumber": 261,
+          "redirectNumber": 261,
+          "sortOrder": 7,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 42,
+          "genreId": 3,
+          "name": "Siri Kannada",
+          "dummyNumber": 264,
+          "redirectNumber": 264,
+          "sortOrder": 8,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 43,
+          "genreId": 3,
+          "name": "Kannada Cinema Club",
+          "dummyNumber": 267,
+          "redirectNumber": 267,
+          "sortOrder": 9,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 44,
+          "genreId": 3,
+          "name": "DD Chandana",
+          "dummyNumber": 268,
+          "redirectNumber": 268,
+          "sortOrder": 10,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 45,
+          "genreId": 3,
+          "name": "Colors Kannada Cinema",
+          "dummyNumber": 269,
+          "redirectNumber": 269,
+          "sortOrder": 11,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 46,
+          "genreId": 3,
+          "name": "Star Suvarna Plus",
+          "dummyNumber": 270,
+          "redirectNumber": 270,
+          "sortOrder": 12,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 47,
+          "genreId": 3,
+          "name": "Zee Power",
+          "dummyNumber": 280,
+          "redirectNumber": 280,
+          "sortOrder": 13,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 48,
+          "genreId": 3,
+          "name": "Public Movies",
+          "dummyNumber": 281,
+          "redirectNumber": 281,
+          "sortOrder": 14,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 49,
+          "genreId": 3,
+          "name": "Sun Udaya Music",
+          "dummyNumber": 282,
+          "redirectNumber": 282,
+          "sortOrder": 15,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 50,
+          "genreId": 3,
+          "name": "Public Music",
+          "dummyNumber": 283,
+          "redirectNumber": 283,
+          "sortOrder": 16,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 51,
+          "genreId": 3,
+          "name": "TV9 Kannada",
+          "dummyNumber": 284,
+          "redirectNumber": 284,
+          "sortOrder": 17,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 52,
+          "genreId": 3,
+          "name": "News First",
+          "dummyNumber": 285,
+          "redirectNumber": 285,
+          "sortOrder": 18,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 53,
+          "genreId": 3,
+          "name": "News18 Kannada",
+          "dummyNumber": 286,
+          "redirectNumber": 286,
+          "sortOrder": 19,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 54,
+          "genreId": 3,
+          "name": "Public TV",
+          "dummyNumber": 287,
+          "redirectNumber": 287,
+          "sortOrder": 20,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 55,
+          "genreId": 3,
+          "name": "Asianet Suvarna News",
+          "dummyNumber": 288,
+          "redirectNumber": 288,
+          "sortOrder": 21,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 56,
+          "genreId": 3,
+          "name": "R.Kannada",
+          "dummyNumber": 289,
+          "redirectNumber": 289,
+          "sortOrder": 22,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 57,
+          "genreId": 3,
+          "name": "Power TV",
+          "dummyNumber": 290,
+          "redirectNumber": 290,
+          "sortOrder": 23,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 58,
+          "genreId": 3,
+          "name": "TV5 Kannada",
+          "dummyNumber": 291,
+          "redirectNumber": 291,
+          "sortOrder": 24,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 59,
+          "genreId": 3,
+          "name": "Zee Kannada News",
+          "dummyNumber": 292,
+          "redirectNumber": 292,
+          "sortOrder": 25,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        },
+        {
+          "id": 60,
+          "genreId": 3,
+          "name": "Freedom TV",
+          "dummyNumber": 293,
+          "redirectNumber": 293,
+          "sortOrder": 26,
+          "isFavorite": false,
+          "favoriteOrder": 0
+        }
+      ]
+    }
+  ]
+}

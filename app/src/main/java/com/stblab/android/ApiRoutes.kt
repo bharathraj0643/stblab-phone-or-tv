@@ -79,6 +79,15 @@ fun Application.installStbLabRoutes(service: HostService) {
             call.remoteAction { withContext(Dispatchers.IO) { remote.tune(body.redirectNumber, body.fastTune) }; TuneResult(body.redirectNumber, body.channelName) }
         }
         get("/api/v1/genres") { call.respond(store.genres()) }
+        get("/api/v1/config") { call.respond(store.exportConfig()) }
+        put("/api/v1/config") {
+            try {
+                store.importConfig(call.receive<ChannelConfigDto>())
+                call.respond(store.exportConfig())
+            } catch (error: Throwable) {
+                call.respond(HttpStatusCode.BadRequest, ErrorDto("Invalid channel JSON", error.message))
+            }
+        }
         post("/api/v1/genres") {
             val body = call.receive<GenreBody>(); call.respond(HttpStatusCode.Created, store.createGenre(body.name, body.sortOrder))
         }

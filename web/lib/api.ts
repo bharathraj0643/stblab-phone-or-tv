@@ -116,6 +116,20 @@ export type Genre = {
   channels: Channel[];
 };
 
+export type ChannelConfig = { version: 1; genres: Genre[] };
+
+export function getChannelConfig(): Promise<ChannelConfig> {
+  return request<ChannelConfig>("/config");
+}
+
+export function replaceChannelConfig(config: ChannelConfig): Promise<ChannelConfig> {
+  return request<ChannelConfig>("/config", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(config),
+  });
+}
+
 export function getGenres(): Promise<Genre[]> {
   return request<Genre[]>("/genres");
 }
