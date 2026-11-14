@@ -7,7 +7,9 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import androidx.core.app.NotificationCompat
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.ApplicationEngine
@@ -29,34 +31,61 @@ class HostService : Service() {
         private const val CHANNEL = "stblab_server"
         private const val NOTIFICATION_ID = 42
     }
-    private var engine: ApplicationEngine? = null
+    @Volatile private var engine: ApplicationEngine? = null
     @Volatile private var startRequested = false
+    private val serviceHandler = Handler(Looper.getMainLooper())
+    private var retryCount = 0
     override fun onCreate() { super.onCreate(); createChannel() }
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (engine != null || startRequested) return START_STICKY
-        error = null
-        startForeground(NOTIFICATION_ID, notification("Starting StbLab server…"))
+        if (startRequested) return START_STICKY
         startRequested = true
+        startForeground(NOTIFICATION_ID, notification("Starting StbLab server…"))
+        startEngine()
+        return START_STICKY
+    }
+
+    private fun startEngine() {
+        if (!startRequested || engine != null) return
         Thread {
             try {
                 val server = embeddedServer(CIO, host = "0.0.0.0", port = PORT) {
                     install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
                     installStbLabRoutes(this@HostService)
                 }
+                server.start(wait = false)
+                if (!startRequested) {
+                    server.stop(250, 1000)
+                    return@Thread
+                }
                 engine = server
-                server.start(wait = true)
+                running = true
+                error = null
+                retryCount = 0
+                updateNotification("Server live · port $PORT")
             } catch (t: Throwable) {
                 error = t.message ?: "Unable to start server"
                 running = false
-                startRequested = false
-                stopSelf()
+                engine = null
+                scheduleRetry()
             }
         }.apply { name = "StbLabHttp"; isDaemon = true; start() }
-        return START_STICKY
+    }
+
+    private fun scheduleRetry() {
+        if (!startRequested) return
+        val delay = (1_000L shl retryCount.coerceAtMost(5)).coerceAtMost(30_000L)
+        retryCount++
+        updateNotification("Server offline · retrying in ${delay / 1000}s")
+        serviceHandler.postDelayed({ if (startRequested && engine == null) startEngine() }, delay)
+    }
+
+    private fun updateNotification(text: String) {
+        getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, notification(text))
     }
     override fun onDestroy() {
         running = false
         startRequested = false
+        serviceHandler.removeCallbacksAndMessages(null)
         val old = engine; engine = null
         Thread { runCatching { old?.stop(250, 1000) } }.start()
         @Suppress("DEPRECATION")

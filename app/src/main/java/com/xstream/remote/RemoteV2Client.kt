@@ -69,6 +69,13 @@ class RemoteV2Client private constructor(context: Context) {
     val paired: Boolean get() = !prefs.getString("tv_certificate", null).isNullOrBlank() && !prefs.getString("tv_fingerprint", null).isNullOrBlank()
     fun savedHost(): String = prefs.getString("host", "") ?: ""
     fun keys(): List<String> = KEYS
+    val remoteTextInputEnabled: Boolean get() = prefs.getBoolean("enable_remote_text_input", false)
+
+    fun setRemoteTextInputEnabled(enabled: Boolean) {
+        if (remoteTextInputEnabled == enabled) return
+        prefs.edit().putBoolean("enable_remote_text_input", enabled).apply()
+        if (paired) connect()
+    }
 
     fun snapshot(): RemoteSnapshot = RemoteSnapshot(
         paired, status == "connecting", connected, status, error, isOn, currentApp,
@@ -133,7 +140,7 @@ class RemoteV2Client private constructor(context: Context) {
             val identity = ClientIdentity.loadOrCreate(identityDir)
             val certificate = Base64.decode(prefs.getString("tv_certificate", ""), Base64.DEFAULT)
             val fingerprint = prefs.getString("tv_fingerprint", "") ?: ""
-            val fresh = AurSession(host, PORT_REMOTE, identity.certDer, identity.keyDer, fingerprint, object : AurSession.Events {
+            val fresh = AurSession(host, PORT_REMOTE, identity.certDer, identity.keyDer, fingerprint, remoteTextInputEnabled, object : AurSession.Events {
                 override fun onConfigured(modelValue: String, vendor: String, software: String) {
                     model = modelValue; manufacturer = vendor; softwareVersion = software
                 }
@@ -161,7 +168,11 @@ class RemoteV2Client private constructor(context: Context) {
         require(KEYS.contains(key)) { "Unknown key: $keyValue" }
         requireSession().sendKey(key)
     }
-    fun sendText(text: String) { require(text.length <= 1000) { "Text is too long" }; requireSession().sendText(text) }
+    fun sendText(text: String) {
+        check(remoteTextInputEnabled) { "Remote text input is disabled. Enable it in the Android app and reconnect." }
+        require(text.length <= 1000) { "Text is too long" }
+        requireSession().sendText(text)
+    }
     fun launch(app: String) {
         require(app.isNotBlank() && app.length <= 512) { "Enter an app package or deep link" }
         val target = app.trim()

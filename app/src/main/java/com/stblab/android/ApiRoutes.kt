@@ -44,7 +44,6 @@ fun Application.installStbLabRoutes(service: HostService) {
     val context = service.applicationContext
     val store = ChannelStore(context)
     val remote = RemoteV2Client.get(context)
-    HostService.running = true
     routing {
         get("/") {
             val page = context.assets.open("web/index.html").bufferedReader().use { it.readText() }
@@ -60,7 +59,7 @@ fun Application.installStbLabRoutes(service: HostService) {
             call.respond(RemoteState(s.connected, s.isOn, s.currentApp,
                 if (s.volumeLevel != null && s.volumeMax != null && s.muted != null) Volume(s.volumeLevel, s.volumeMax, s.muted) else null,
                 if (s.manufacturer != null && s.model != null && s.softwareVersion != null) Device(s.manufacturer, s.model, s.softwareVersion) else null,
-                if (s.connected) listOf("KEY", "IME", "APP_LINK", "VOLUME", "POWER") else emptyList()))
+                if (s.connected) listOf("KEY", * (if (remote.remoteTextInputEnabled) arrayOf("IME") else emptyArray()), "APP_LINK", "VOLUME", "POWER") else emptyList()))
         }
         get("/api/v1/remote/keys") { call.respond(remote.keys()) }
         post("/api/v1/remote/key") {

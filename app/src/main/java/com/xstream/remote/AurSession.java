@@ -63,7 +63,7 @@ final class AurSession {
     private static final int F_POWER = 32;
     private static final int F_VOLUME = 64;
     private static final int F_APP_LINK = 512;
-    private static final int FEATURES = F_PING | F_KEY | F_IME | F_POWER | F_VOLUME | F_APP_LINK;
+    private static final int BASE_FEATURES = F_PING | F_KEY | F_POWER | F_VOLUME | F_APP_LINK;
 
     private static final int DIR_SHORT = 3;
 
@@ -136,18 +136,21 @@ final class AurSession {
     private volatile boolean ready;
     private volatile Thread reader;
 
-    private volatile int features = FEATURES;
+    private final int requestedFeatures;
+    private volatile int features;
     private volatile long imeCounter;
     private volatile long fieldCounter;
     private volatile long connectStart;
 
     AurSession(String host, int port, byte[] certDer, byte[] keyDer,
-               String pinnedFingerprint, Events events) {
+               String pinnedFingerprint, boolean enableRemoteTextInput, Events events) {
         this.host = host;
         this.port = port;
         this.certDer = certDer;
         this.keyDer = keyDer;
         this.pinnedFingerprint = pinnedFingerprint == null ? "" : pinnedFingerprint;
+        this.requestedFeatures = BASE_FEATURES | (enableRemoteTextInput ? F_IME : 0);
+        this.features = requestedFeatures;
         this.events = events;
     }
 
@@ -221,6 +224,9 @@ final class AurSession {
     }
 
     void sendText(String text) {
+        if ((features & F_IME) == 0) {
+            throw new UnsupportedOperationException("Remote text input is disabled. Enable it in the Android app and reconnect.");
+        }
         requireReady();
         if (text == null || text.isEmpty()) {
             return;
@@ -355,7 +361,7 @@ final class AurSession {
     private void onConfigure(byte[] payload) {
         List<Proto.Field> configure = Proto.parse(payload);
         long supported = Proto.number(configure, 1, 0);
-        features = (int) (FEATURES & supported);
+        features = (int) (requestedFeatures & supported);
 
         List<Proto.Field> device = Proto.nested(configure, 2);
         String model = Proto.text(device, 1, "Android TV");

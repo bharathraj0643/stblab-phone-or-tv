@@ -26,7 +26,10 @@ Open this directory in Android Studio and select **Build → Assemble Module ‘
 debug APK is written to `app/build/outputs/apk/debug/app-debug.apk`.
 
 The host runs as a low-importance foreground service so Android can keep it alive in the background.
-It starts at boot and when the app opens; Android may show its silent, ongoing service notification.
+It starts at boot and when the app opens, reports live/offline state in the app, and retries server
+startup failures with backoff. **STOP SERVER & EXIT** stops the server, removes the app screen from
+Recents, and terminates the app process. Android may show a silent, ongoing service notification
+while the server is running.
 
 To rebuild the picker UI, run `npm ci` and `npm run build:android` in `web/`; that exports the Next.js
 page and copies its static assets into the Android app before packaging.
@@ -54,3 +57,10 @@ between browser and BPL host is not encrypted.
 
 The protocol sources adapted from `xstream-remote` are under `app/src/main/java/com/xstream/remote/`.
 The corresponding MIT license notice is packaged at `app/src/main/assets/licenses/xstream-remote-MIT.txt`.
+# tvQuickActions Gamepad compatibility
+
+The Android Remote v2 client leaves remote text-input (IME) negotiation disabled by default,
+which keeps the target TV's third-party keyboard services from competing for the IME. Remote
+key, power, volume, and app-link controls remain available. To enable this app's text injection,
+turn on **REMOTE TEXT INPUT** in the Android TV app; changing the setting reconnects the session.
+

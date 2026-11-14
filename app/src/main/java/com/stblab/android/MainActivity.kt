@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.Process
 import android.text.InputType
 import android.view.Gravity
 import android.view.View
@@ -33,6 +34,7 @@ class MainActivity : Activity() {
     private lateinit var pairButton: Button
     private lateinit var reconnectButton: Button
     private lateinit var confirmButton: Button
+    private lateinit var imeToggleButton: Button
     @Volatile private var activeDiscovery: Discovery? = null
     private val discoveryExecutor = Executors.newSingleThreadExecutor { task -> Thread(task, "StbLabDiscovery").apply { isDaemon = true } }
     private val handler = Handler(Looper.getMainLooper())
@@ -71,7 +73,11 @@ class MainActivity : Activity() {
         root.addView(text("StbLab", 32f))
         root.addView(text("BPL TV host · Airtel Remote v2 client", 16f, 0xffaab4cf.toInt()))
         root.addView(text("WEB SERVER", 14f, 0xff27d7a1.toInt()))
-        serverStatus = text("Starting server automatically…", 18f, 0xffffcc66.toInt()); root.addView(serverStatus)
+        val serverRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+        serverStatus = text("● SERVER STARTING", 20f, 0xffffcc66.toInt())
+        serverRow.addView(serverStatus, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        serverRow.addView(button("STOP SERVER & EXIT") { stopServerAndExit() })
+        root.addView(serverRow)
         url = text("", 22f, 0xff27d7a1.toInt()); root.addView(url)
 
         root.addView(text("AIRTEL BOX PAIRING", 14f, 0xff27d7a1.toInt()))
@@ -94,6 +100,12 @@ class MainActivity : Activity() {
         discoveryResults = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         root.addView(discoveryResults)
         remoteStatus = text("Remote status: unpaired", 17f, 0xffffcc66.toInt()); root.addView(remoteStatus)
+        imeToggleButton = button(imeToggleLabel()) {
+            remote.setRemoteTextInputEnabled(!remote.remoteTextInputEnabled)
+            imeToggleButton.text = imeToggleLabel()
+        }
+        root.addView(imeToggleButton)
+        root.addView(text("Remote text input can conflict with third-party keyboard services such as tvQuickActions Gamepad. Leave disabled unless you use this app's text injection.", 13f, 0xffaab4cf.toInt()))
         codeInput = field("6-character code shown on Airtel TV", InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS)
         root.addView(codeInput)
         confirmButton = button("CONFIRM PAIRING CODE") { confirmPairing() }
@@ -160,6 +172,13 @@ class MainActivity : Activity() {
         val intent = Intent(this, HostService::class.java).setAction(HostService.ACTION_START)
         androidx.core.content.ContextCompat.startForegroundService(this, intent)
     }
+
+    private fun stopServerAndExit() {
+        stopService(Intent(this, HostService::class.java))
+        finishAndRemoveTask()
+        handler.postDelayed({ Process.killProcess(Process.myPid()) }, 500)
+    }
+
     private fun startPairing() {
         try {
             remote.startPair(hostInput.text.toString())
@@ -178,7 +197,17 @@ class MainActivity : Activity() {
     private fun refresh() {
         val ip = lanAddress()
         val running = HostService.running
-        serverStatus.text = HostService.error?.let { "Server error: $it" } ?: if (running) "Server running" else "Server stopped"
+        val serverError = HostService.error
+        serverStatus.text = when {
+            running -> "● SERVER LIVE · PORT ${HostService.PORT}"
+            serverError != null -> "● SERVER OFFLINE · RETRYING"
+            else -> "● SERVER STARTING"
+        }
+        serverStatus.setTextColor(when {
+            running -> 0xff35e58f.toInt()
+            serverError != null -> 0xffff6b6b.toInt()
+            else -> 0xffffcc66.toInt()
+        })
         url.text = if (running && ip != "No network") "http://$ip:${HostService.PORT}" else ""
         val state = remote.snapshot()
         remoteStatus.text = when {
@@ -188,7 +217,12 @@ class MainActivity : Activity() {
             else -> "Remote: ${state.status}${state.host.takeIf { it.isNotBlank() }?.let { " · $it" } ?: ""}"
         }
         remoteStatus.setTextColor(if (state.connected) 0xff27d7a1.toInt() else 0xffffcc66.toInt())
+        imeToggleButton.text = imeToggleLabel()
     }
+
+    private fun imeToggleLabel(): String = if (remote.remoteTextInputEnabled)
+        "REMOTE TEXT INPUT: ON"
+    else "REMOTE TEXT INPUT: OFF · GAMEPAD SAFE"
 
     private fun setButtonFocusStyle(button: Button, focused: Boolean) {
         val density = resources.displayMetrics.density
