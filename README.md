@@ -64,3 +64,10 @@ which keeps the target TV's third-party keyboard services from competing for the
 key, power, volume, and app-link controls remain available. To enable this app's text injection,
 turn on **REMOTE TEXT INPUT** in the Android TV app; changing the setting reconnects the session.
 
+## Choose a setup
+
+| Folder | Setup | How it works | Download |
+| --- | --- | --- | --- |
+| [`method-1_laptop`](https://github.com/bharathraj0643/stblab) | Laptop and browser | Runs the backend on a laptop. Open the web page from a phone or TV browser on the same network. | [releases](https://github.com/bharathraj0643/stblab/releases) |
+| [`method-2_phone-or-tv`](https://github.com/bharathraj0643/stblab-phone-or-tv) | Android host | Runs the backend on android host and remote client on any browser tv or phone. | [releases](https://github.com/bharathraj0643/stblab-phone-or-tv/releases) |
+| [`method-3_gui-recommended-method`](https://github.com/bharathraj0643/stblab-gui) | Native Android TV app | Runs the picker and remote controls directly as a native Android app, without a LAN web server or browser. intended to be used on android tv only, although it runs on android phone too, but ui controls are designed for a tv remote. | [releases](https://github.com/bharathraj0643/stblab-gui/releases) |
