@@ -98,8 +98,8 @@ function sameStbState(left: StbState, right: StbState): boolean {
     left.device?.manufacturer === right.device?.manufacturer &&
     left.device?.model === right.device?.model &&
     left.device?.softwareVersion === right.device?.softwareVersion &&
-    left.features.length === right.features.length &&
-    left.features.every((feature, index) => feature === right.features[index]);
+    (left.features?.length ?? 0) === (right.features?.length ?? 0) &&
+    (left.features ?? []).every((feature, index) => feature === right.features?.[index]);
 }
 
 function moveKeypadFocus(active: HTMLElement, direction: "left" | "right" | "up" | "down"): void {

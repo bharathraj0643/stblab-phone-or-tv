@@ -64,7 +64,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new Error(messageFrom(payload, response.status));
   }
 
-  return (payload ?? undefined) as T;
+  if (payload === null) {
+    throw new Error("The API returned an empty response.");
+  }
+
+  return payload as T;
 }
 
 export function getState(): Promise<StbState> {
