@@ -314,7 +314,7 @@ final class AurSession {
         }
     }
 
-    private void handle(byte[] frame) {
+    private void handle(byte[] frame) throws IOException {
         List<Proto.Field> message = Proto.parse(frame);
         for (Proto.Field field : message) {
             switch (field.number) {
