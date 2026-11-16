@@ -181,6 +181,22 @@ final class AurSession {
         thread.setDaemon(true);
         reader = thread;
         thread.start();
+
+        // After a reboot the box may accept the TLS handshake while its AUR
+        // service is still starting, so set_active can be delayed 30-60 s.
+        // Rather than timing out in the caller (which would close a valid socket
+        // and cause a reconnect storm), we keep the connection open and let a
+        // watchdog close it if the box never becomes ready. The reader thread
+        // will then fire onClosed, and the reconnect loop will retry with backoff.
+        final SSLSocket sockForWatchdog = ssl;
+        Thread watchdog = new Thread(() -> {
+            try { Thread.sleep(90_000); } catch (InterruptedException ignored) { return; }
+            if (!ready && running) {
+                try { sockForWatchdog.close(); } catch (IOException ignored) {}
+            }
+        }, "aur-ready-watchdog");
+        watchdog.setDaemon(true);
+        watchdog.start();
     }
 
     boolean awaitReady(long timeoutMillis) throws InterruptedException {
@@ -309,8 +325,9 @@ final class AurSession {
                     write(Proto.msg(2, Proto.uint(1, features)));
                     break;
                 case 3:
-                    events.onError("The box rejected that request");
-                    break;
+                    // The box sent a protocol-level error. Throwing here causes
+                    // readLoop to fire onClosed, which schedules a reconnect.
+                    throw new IOException("The box rejected the connection (protocol error)");
                 case 8: {
                     List<Proto.Field> ping = Proto.parse(field.bytes);
                     long value = Proto.number(ping, 1, 0);
