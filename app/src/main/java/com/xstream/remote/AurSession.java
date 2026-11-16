@@ -123,7 +123,6 @@ final class AurSession {
     private final int port;
     private final byte[] certDer;
     private final byte[] keyDer;
-    private final String pinnedFingerprint;
     private final Events events;
 
     private final Object writeLock = new Object();
@@ -143,12 +142,11 @@ final class AurSession {
     private volatile long connectStart;
 
     AurSession(String host, int port, byte[] certDer, byte[] keyDer,
-               String pinnedFingerprint, boolean enableRemoteTextInput, Events events) {
+               boolean enableRemoteTextInput, Events events) {
         this.host = host;
         this.port = port;
         this.certDer = certDer;
         this.keyDer = keyDer;
-        this.pinnedFingerprint = pinnedFingerprint == null ? "" : pinnedFingerprint;
         this.requestedFeatures = BASE_FEATURES | (enableRemoteTextInput ? F_IME : 0);
         this.features = requestedFeatures;
         this.events = events;
@@ -156,9 +154,6 @@ final class AurSession {
 
     void connect() throws Exception {
         close();
-        if (pinnedFingerprint.isEmpty()) {
-            throw new IOException("This phone is not paired with the box");
-        }
         connectStart = System.currentTimeMillis();
 
         SSLContext context = buildContext();
@@ -425,7 +420,7 @@ final class AurSession {
         TrustManager[] trust = new TrustManager[]{new X509TrustManager() {
             @Override
             public void checkClientTrusted(X509Certificate[] chain, String authType) {
-                // local network, certificate is pinned by the pairing
+                // local network; this client certificate is established during pairing
             }
 
             @Override
@@ -434,11 +429,9 @@ final class AurSession {
                 if (chain == null || chain.length == 0) {
                     throw new CertificateException("The box did not present a certificate");
                 }
-                String actual = sha256(chain[0].getEncoded());
-                if (!actual.equalsIgnoreCase(pinnedFingerprint)) {
-                    throw new CertificateException(
-                            "The box certificate changed. Pair this phone again.");
-                }
+                // Android TV Remote devices may rotate their self-signed certificate after
+                // restart. Match mystb by accepting it; client authentication still uses
+                // the certificate established during pairing.
             }
 
             @Override

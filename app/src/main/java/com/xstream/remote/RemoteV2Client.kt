@@ -139,8 +139,7 @@ class RemoteV2Client private constructor(context: Context) {
             closingByUs = false
             val identity = ClientIdentity.loadOrCreate(identityDir)
             val certificate = Base64.decode(prefs.getString("tv_certificate", ""), Base64.DEFAULT)
-            val fingerprint = prefs.getString("tv_fingerprint", "") ?: ""
-            val fresh = AurSession(host, PORT_REMOTE, identity.certDer, identity.keyDer, fingerprint, remoteTextInputEnabled, object : AurSession.Events {
+            val fresh = AurSession(host, PORT_REMOTE, identity.certDer, identity.keyDer, remoteTextInputEnabled, object : AurSession.Events {
                 override fun onConfigured(modelValue: String, vendor: String, software: String) {
                     model = modelValue; manufacturer = vendor; softwareVersion = software
                 }
@@ -152,7 +151,7 @@ class RemoteV2Client private constructor(context: Context) {
                     connected = false; error = reason; status = "disconnected"
                     if (!closingByUs && reconnectEnabled && paired) io.schedule({ connectOnIo() }, 2, TimeUnit.SECONDS)
                 }
-                override fun onPeerCert(sha256: String) { /* AurSession verifies this against the stored pin. */ }
+                override fun onPeerCert(sha256: String) { /* Keep pairing fingerprint for status/diagnostics. */ }
             })
             session = fresh
             fresh.connect()
