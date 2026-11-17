@@ -41,6 +41,7 @@ class HostService : Service() {
     }
     @Volatile private var engine: ApplicationEngine? = null
     @Volatile private var startRequested = false
+    @Volatile private var isStarting = false
     private val serviceHandler = Handler(Looper.getMainLooper())
     private var retryCount = 0
     private var wakeLock: PowerManager.WakeLock? = null
@@ -56,7 +57,7 @@ class HostService : Service() {
         registerNetworkMonitor()
     }
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (startRequested) return START_STICKY
+        if (startRequested && (engine != null || isStarting)) return START_STICKY
         startRequested = true
         startForeground(NOTIFICATION_ID, notification("Starting StbLab server…"))
         startEngine()
@@ -64,27 +65,40 @@ class HostService : Service() {
     }
 
     private fun startEngine() {
-        if (!startRequested || engine != null) return
+        synchronized(this) {
+            if (!startRequested || engine != null || isStarting) return
+            isStarting = true
+        }
         Thread {
+            var createdServer: ApplicationEngine? = null
             try {
                 val server = embeddedServer(CIO, host = "0.0.0.0", port = PORT) {
                     install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
                     installStbLabRoutes(this@HostService)
                 }
+                createdServer = server
                 server.start(wait = false)
-                if (!startRequested) {
-                    server.stop(250, 1000)
-                    return@Thread
+                synchronized(this) {
+                    if (!startRequested) {
+                        server.stop(250, 1000)
+                        isStarting = false
+                        return@Thread
+                    }
+                    engine = server
+                    running = true
+                    error = null
+                    retryCount = 0
+                    isStarting = false
                 }
-                engine = server
-                running = true
-                error = null
-                retryCount = 0
                 updateNotification("Server live · port $PORT")
             } catch (t: Throwable) {
-                error = t.message ?: "Unable to start server"
-                running = false
-                engine = null
+                runCatching { createdServer?.stop(250, 1000) }
+                synchronized(this) {
+                    error = t.message ?: "Unable to start server"
+                    running = false
+                    engine = null
+                    isStarting = false
+                }
                 scheduleRetry()
             }
         }.apply { name = "StbLabHttp"; isDaemon = true; start() }
@@ -95,7 +109,7 @@ class HostService : Service() {
         val delay = (1_000L shl retryCount.coerceAtMost(5)).coerceAtMost(30_000L)
         retryCount++
         updateNotification("Server offline · retrying in ${delay / 1000}s")
-        serviceHandler.postDelayed({ if (startRequested && engine == null) startEngine() }, delay)
+        serviceHandler.postDelayed({ if (startRequested && engine == null && !isStarting) startEngine() }, delay)
     }
 
     private fun updateNotification(text: String) {
@@ -104,6 +118,7 @@ class HostService : Service() {
     override fun onDestroy() {
         running = false
         startRequested = false
+        isStarting = false
         serviceHandler.removeCallbacksAndMessages(null)
         unregisterScreenReceiver()
         unregisterNetworkMonitor()
@@ -147,7 +162,7 @@ class HostService : Service() {
                         Intent.ACTION_SCREEN_ON, Intent.ACTION_USER_PRESENT -> {
                             // BPL TV woke up from sleep: aggressively ensure engine and remote connection are alive
                             acquireLocks()
-                            if (engine == null && startRequested) {
+                            if (engine == null && startRequested && !isStarting) {
                                 startEngine()
                             }
                             serviceHandler.postDelayed({
@@ -180,7 +195,7 @@ class HostService : Service() {
             val callback = object : ConnectivityManager.NetworkCallback() {
                 override fun onAvailable(network: Network) {
                     // Network restored or re-associated after sleep
-                    if (engine == null && startRequested) {
+                    if (engine == null && startRequested && !isStarting) {
                         serviceHandler.post { startEngine() }
                     }
                     serviceHandler.postDelayed({
