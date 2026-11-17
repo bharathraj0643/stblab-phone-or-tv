@@ -218,7 +218,14 @@ class RemoteV2Client private constructor(context: Context) {
         remote.sendKey("TV"); Thread.sleep(if (fastTune) 300 else 3000)
         redirectNumber.toString().forEach { digit -> remote.sendKey("NUM_$digit"); Thread.sleep(150) }
     }
-    private fun requireSession(): AurSession = session?.takeIf { it.isReady } ?: throw IllegalStateException("Not connected to the Airtel box")
+    private fun requireSession(): AurSession {
+        val s = session
+        if (s != null && s.isReady) return s
+        if (paired && !connected) {
+            connect()
+        }
+        throw IllegalStateException("Not connected to the Airtel box")
+    }
 
     private fun normalizeKey(supplied: String): String {
         var key = supplied.trim().uppercase(Locale.US).replace(Regex("[\\s-]+"), "_")

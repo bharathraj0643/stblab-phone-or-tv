@@ -5,12 +5,20 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.PowerManager
 import androidx.core.app.NotificationCompat
+import com.xstream.remote.RemoteV2Client
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.ApplicationEngine
 import io.ktor.server.engine.embeddedServer
@@ -35,7 +43,18 @@ class HostService : Service() {
     @Volatile private var startRequested = false
     private val serviceHandler = Handler(Looper.getMainLooper())
     private var retryCount = 0
-    override fun onCreate() { super.onCreate(); createChannel() }
+    private var wakeLock: PowerManager.WakeLock? = null
+    private var wifiLock: WifiManager.WifiLock? = null
+    private var screenReceiver: BroadcastReceiver? = null
+    private var networkCallback: ConnectivityManager.NetworkCallback? = null
+
+    override fun onCreate() {
+        super.onCreate()
+        createChannel()
+        acquireLocks()
+        registerScreenReceiver()
+        registerNetworkMonitor()
+    }
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (startRequested) return START_STICKY
         startRequested = true
@@ -86,11 +105,99 @@ class HostService : Service() {
         running = false
         startRequested = false
         serviceHandler.removeCallbacksAndMessages(null)
+        unregisterScreenReceiver()
+        unregisterNetworkMonitor()
+        releaseLocks()
         val old = engine; engine = null
         Thread { runCatching { old?.stop(250, 1000) } }.start()
         @Suppress("DEPRECATION")
         stopForeground(true)
         super.onDestroy()
+    }
+
+    private fun acquireLocks() {
+        runCatching {
+            val pm = getSystemService(Context.POWER_SERVICE) as? PowerManager
+            wakeLock = pm?.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "StbLab:HostServiceWakeLock")?.apply {
+                setReferenceCounted(false)
+                acquire()
+            }
+        }
+        runCatching {
+            val wm = applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
+            wifiLock = wm?.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "StbLab:HostServiceWifiLock")?.apply {
+                setReferenceCounted(false)
+                acquire()
+            }
+        }
+    }
+
+    private fun releaseLocks() {
+        runCatching { wakeLock?.let { if (it.isHeld) it.release() } }
+        wakeLock = null
+        runCatching { wifiLock?.let { if (it.isHeld) it.release() } }
+        wifiLock = null
+    }
+
+    private fun registerScreenReceiver() {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent?) {
+                when (intent?.action) {
+                    Intent.ACTION_SCREEN_ON, Intent.ACTION_USER_PRESENT -> {
+                        // BPL TV woke up from sleep: aggressively ensure engine and remote connection are alive
+                        acquireLocks()
+                        if (engine == null && startRequested) {
+                            startEngine()
+                        }
+                        serviceHandler.postDelayed({
+                            RemoteV2Client.get(applicationContext).connect()
+                        }, 1000)
+                    }
+                }
+            }
+        }
+        screenReceiver = receiver
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_ON)
+            addAction(Intent.ACTION_USER_PRESENT)
+        }
+        registerReceiver(receiver, filter)
+    }
+
+    private fun unregisterScreenReceiver() {
+        screenReceiver?.let {
+            runCatching { unregisterReceiver(it) }
+        }
+        screenReceiver = null
+    }
+
+    private fun registerNetworkMonitor() {
+        runCatching {
+            val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager ?: return
+            val callback = object : ConnectivityManager.NetworkCallback() {
+                override fun onAvailable(network: Network) {
+                    // Network restored or re-associated after sleep
+                    if (engine == null && startRequested) {
+                        serviceHandler.post { startEngine() }
+                    }
+                    serviceHandler.postDelayed({
+                        RemoteV2Client.get(applicationContext).connect()
+                    }, 1500)
+                }
+            }
+            networkCallback = callback
+            cm.registerDefaultNetworkCallback(callback)
+        }
+    }
+
+    private fun unregisterNetworkMonitor() {
+        networkCallback?.let {
+            runCatching {
+                val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+                cm?.unregisterNetworkCallback(it)
+            }
+        }
+        networkCallback = null
     }
     override fun onBind(intent: Intent?): IBinder? = null
     private fun createChannel() {
