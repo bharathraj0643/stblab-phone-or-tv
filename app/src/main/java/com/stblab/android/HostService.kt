@@ -140,28 +140,30 @@ class HostService : Service() {
     }
 
     private fun registerScreenReceiver() {
-        val receiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context, intent: Intent?) {
-                when (intent?.action) {
-                    Intent.ACTION_SCREEN_ON, Intent.ACTION_USER_PRESENT -> {
-                        // BPL TV woke up from sleep: aggressively ensure engine and remote connection are alive
-                        acquireLocks()
-                        if (engine == null && startRequested) {
-                            startEngine()
+        runCatching {
+            val receiver = object : BroadcastReceiver() {
+                override fun onReceive(context: Context, intent: Intent?) {
+                    when (intent?.action) {
+                        Intent.ACTION_SCREEN_ON, Intent.ACTION_USER_PRESENT -> {
+                            // BPL TV woke up from sleep: aggressively ensure engine and remote connection are alive
+                            acquireLocks()
+                            if (engine == null && startRequested) {
+                                startEngine()
+                            }
+                            serviceHandler.postDelayed({
+                                RemoteV2Client.get(applicationContext).connect()
+                            }, 1000)
                         }
-                        serviceHandler.postDelayed({
-                            RemoteV2Client.get(applicationContext).connect()
-                        }, 1000)
                     }
                 }
             }
+            screenReceiver = receiver
+            val filter = IntentFilter().apply {
+                addAction(Intent.ACTION_SCREEN_ON)
+                addAction(Intent.ACTION_USER_PRESENT)
+            }
+            androidx.core.content.ContextCompat.registerReceiver(this, receiver, filter, androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED)
         }
-        screenReceiver = receiver
-        val filter = IntentFilter().apply {
-            addAction(Intent.ACTION_SCREEN_ON)
-            addAction(Intent.ACTION_USER_PRESENT)
-        }
-        registerReceiver(receiver, filter)
     }
 
     private fun unregisterScreenReceiver() {
@@ -172,6 +174,7 @@ class HostService : Service() {
     }
 
     private fun registerNetworkMonitor() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) return
         runCatching {
             val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager ?: return
             val callback = object : ConnectivityManager.NetworkCallback() {
@@ -185,8 +188,8 @@ class HostService : Service() {
                     }, 1500)
                 }
             }
-            networkCallback = callback
             cm.registerDefaultNetworkCallback(callback)
+            networkCallback = callback
         }
     }
 
