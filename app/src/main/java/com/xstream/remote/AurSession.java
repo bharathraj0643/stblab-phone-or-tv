@@ -162,7 +162,7 @@ final class AurSession {
         ssl.setTcpNoDelay(true);
         ssl.setSoTimeout(8000);
         ssl.connect(new InetSocketAddress(host, port), 8000);
-        ssl.setSoTimeout(0);
+        ssl.setSoTimeout(15000);
         ssl.startHandshake();
 
         socket = ssl;
@@ -185,14 +185,13 @@ final class AurSession {
         thread.start();
 
         // Proactive heartbeat / ping thread: Android TV remote protocol uses ping (field 8)
-        // and expects pong (field 9). If the Airtel box went to sleep or the connection
-        // dropped silently, writing a ping or encountering a write error will detect it immediately.
+        // and expects pong (field 9). Send ping every 5s to keep Wi-Fi NAT alive.
         final SSLSocket sockForPing = ssl;
         Thread pinger = new Thread(() -> {
             long pingVal = 1;
             while (running && !sockForPing.isClosed()) {
                 try {
-                    Thread.sleep(15_000);
+                    Thread.sleep(5_000);
                 } catch (InterruptedException e) {
                     return;
                 }

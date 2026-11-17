@@ -124,14 +124,16 @@ class RemoteV2Client private constructor(context: Context) {
         io.execute { try { current.finish(clean) } catch (t: Throwable) { error = t.message ?: "Pairing code was rejected"; status = "waiting_code" } }
     }
 
-    fun connect() {
+    fun connect(force: Boolean = false) {
         if (!paired) { status = "unpaired"; return }
+        if (!force && connected && session?.isReady == true) return
         reconnectEnabled = true
-        io.execute { connectOnIo() }
+        io.execute { connectOnIo(force) }
     }
 
-    private fun connectOnIo() {
+    private fun connectOnIo(force: Boolean = false) {
         if (!paired) return
+        if (!force && connected && session?.isReady == true) return
         val host = savedHost()
         status = "connecting"; error = null; connected = false
         try {
@@ -146,7 +148,7 @@ class RemoteV2Client private constructor(context: Context) {
                 }
                 override fun onReady(started: Boolean, rttMillis: Long) {
                     isOn = started; connected = true; status = "connected"; error = null
-                    reconnectBackoffMs = 2_000L  // reset backoff after a successful handshake
+                    reconnectBackoffMs = 1_000L  // reset backoff after a successful handshake
                 }
                 override fun onVolume(level: Int, max: Int, mutedValue: Boolean) { volumeLevel = level; volumeMax = max; muted = mutedValue }
                 override fun onApp(packageName: String) { currentApp = packageName }
@@ -175,7 +177,7 @@ class RemoteV2Client private constructor(context: Context) {
     private fun scheduleReconnect() {
         if (!reconnectEnabled || !paired) return
         val delay = reconnectBackoffMs
-        reconnectBackoffMs = minOf(reconnectBackoffMs * 2, 30_000L)
+        reconnectBackoffMs = minOf(reconnectBackoffMs * 2, 5_000L)
         io.schedule({ connectOnIo() }, delay, TimeUnit.MILLISECONDS)
     }
 
@@ -219,10 +221,16 @@ class RemoteV2Client private constructor(context: Context) {
         redirectNumber.toString().forEach { digit -> remote.sendKey("NUM_$digit"); Thread.sleep(150) }
     }
     private fun requireSession(): AurSession {
-        val s = session
+        var s = session
         if (s != null && s.isReady) return s
-        if (paired && !connected) {
+        if (paired) {
             connect()
+            val start = System.currentTimeMillis()
+            while (System.currentTimeMillis() - start < 2500) {
+                s = session
+                if (s != null && s.awaitReady(250)) return s
+                Thread.sleep(50)
+            }
         }
         throw IllegalStateException("Not connected to the Airtel box")
     }
