@@ -162,7 +162,7 @@ final class AurSession {
         ssl.setTcpNoDelay(true);
         ssl.setSoTimeout(8000);
         ssl.connect(new InetSocketAddress(host, port), 8000);
-        ssl.setSoTimeout(15000);
+        ssl.setSoTimeout(0);
         ssl.startHandshake();
 
         socket = ssl;
@@ -183,31 +183,6 @@ final class AurSession {
         thread.setDaemon(true);
         reader = thread;
         thread.start();
-
-        // Proactive heartbeat / ping thread: Android TV remote protocol uses ping (field 8)
-        // and expects pong (field 9). Send ping every 5s to keep Wi-Fi NAT alive.
-        final SSLSocket sockForPing = ssl;
-        Thread pinger = new Thread(() -> {
-            long pingVal = 1;
-            while (running && !sockForPing.isClosed()) {
-                try {
-                    Thread.sleep(5_000);
-                } catch (InterruptedException e) {
-                    return;
-                }
-                if (!running || sockForPing.isClosed()) break;
-                if (ready) {
-                    try {
-                        write(Proto.msg(8, Proto.uint(1, pingVal++)));
-                    } catch (Exception e) {
-                        try { sockForPing.close(); } catch (IOException ignored) {}
-                        break;
-                    }
-                }
-            }
-        }, "aur-pinger");
-        pinger.setDaemon(true);
-        pinger.start();
 
         // After a reboot the box may accept the TLS handshake while its AUR
         // service is still starting, so set_active can be delayed 30-60 s.

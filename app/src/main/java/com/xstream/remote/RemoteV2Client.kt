@@ -215,10 +215,9 @@ class RemoteV2Client private constructor(context: Context) {
     }
     @Synchronized fun tune(redirectNumber: Int, fastTune: Boolean) {
         require(redirectNumber in 0..9999) { "Channel number must be 0–9999" }
-        val remote = requireSession()
-        remote.sendKey("HOME"); Thread.sleep(500)
-        remote.sendKey("TV"); Thread.sleep(if (fastTune) 300 else 3000)
-        redirectNumber.toString().forEach { digit -> remote.sendKey("NUM_$digit"); Thread.sleep(150) }
+        sendKey("HOME"); Thread.sleep(500)
+        sendKey("TV"); Thread.sleep(if (fastTune) 300 else 3000)
+        redirectNumber.toString().forEach { digit -> sendKey("NUM_$digit"); Thread.sleep(150) }
     }
     private fun requireSession(): AurSession {
         var s = session
@@ -226,10 +225,10 @@ class RemoteV2Client private constructor(context: Context) {
         if (paired) {
             connect()
             val start = System.currentTimeMillis()
-            while (System.currentTimeMillis() - start < 2500) {
+            while (System.currentTimeMillis() - start < 3000) {
                 s = session
-                if (s != null && s.awaitReady(250)) return s
-                Thread.sleep(50)
+                if (s != null && s.isReady) return s
+                Thread.sleep(100)
             }
         }
         throw IllegalStateException("Not connected to the Airtel box")
